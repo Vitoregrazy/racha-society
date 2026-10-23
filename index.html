@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Racha Society</title>
+<style>
+:root{--bg:#f3f6f4;--card:#fff;--tx:#12201a;--mut:#6b7c73;--ac:#12a150;--acx:#fff;--bd:#dfe7e2;--dg:#d33;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1511;--card:#16211b;--tx:#e8f2ec;--mut:#8da197;--bd:#243229;--ac:#22c55e;--acx:#06210f}}
+:root[data-theme="dark"]{--bg:#0d1511;--card:#16211b;--tx:#e8f2ec;--mut:#8da197;--bd:#243229;--ac:#22c55e;--acx:#06210f}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:84px;-webkit-tap-highlight-color:transparent}
+header{padding:16px 16px 4px;max-width:720px;margin:auto}
+h1{margin:0;font-size:22px;letter-spacing:-.5px}h1 span{color:var(--ac)}
+.sub{color:var(--mut);font-size:13px;margin-top:2px}
+main{max-width:720px;margin:auto;padding:8px 16px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px;margin:10px 0}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:10px 14px}
+button.p{background:var(--ac);color:var(--acx);border-color:transparent;font-weight:700}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.s{padding:6px 10px;font-size:13px}
+input[type=text]{font:inherit;width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.row>.f0{flex:0 0 auto}
+.pl{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.pl:last-child{border:0}.pl .n{flex:1 1 110px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.pl button{padding:5px 8px;font-size:14px}
+.pl .y.on{background:var(--ac);color:var(--acx)}.pl .no.on{background:var(--dg);color:#fff}
+.gk.on,.vip.on{background:var(--ac);color:var(--acx)}.pro.on{background:#f59e0b;color:#000;border-color:transparent}
+.cnt{font-size:14px;font-weight:700}.ok{color:var(--ac)}.bad{color:var(--dg)}
+.teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.team{border-radius:16px;padding:12px;color:#fff}
+.team h3{margin:0 0 6px;font-size:17px;display:flex;justify-content:space-between}
+.team li{list-style:none;padding:3px 0;font-weight:600}
+.team ul{margin:0;padding:0}.team .st{font-size:12px;opacity:.85}
+.res{border:1px dashed var(--bd);border-radius:12px;padding:10px;margin-top:10px;color:var(--mut);font-size:14px}
+.clock{font-size:68px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-2px;margin:4px 0}
+.clock.end{color:var(--dg);animation:bl .5s infinite alternate}
+@keyframes bl{to{opacity:.3}}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;text-align:center}
+.sc{font-size:44px;font-weight:800}
+.chip{border-radius:12px;color:#fff;padding:10px 6px;font-weight:700}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--bd);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;border:0;border-radius:0;background:none;padding:12px 4px;font-size:13px;color:var(--mut)}
+nav button.on{color:var(--ac);font-weight:700}
+.q{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.q span{padding:4px 10px;border-radius:99px;color:#fff;font-size:13px;font-weight:600}
+.h{font-size:13px;color:var(--mut);padding:3px 0}
+.empty{text-align:center;color:var(--mut);padding:24px 8px}
+table{width:100%;border-collapse:collapse}td,th{padding:8px 4px;text-align:center;border-bottom:1px solid var(--bd)}td:nth-child(2),th:nth-child(2){text-align:left}th{font-size:12px;color:var(--mut)}
+#toast{position:fixed;left:16px;right:16px;bottom:96px;background:var(--tx);color:var(--bg);padding:10px 14px;border-radius:12px;display:none;z-index:9}
+body.mem .adm{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>⚽ Racha <span>Society</span></h1><div class="sub" id="gname">5 na linha + 1 no gol · mínimo de 12 jogadores</div></header>
+<main>
+<section id="t-setup">
+  <div class="card"><b>Entrar no grupo</b><div class="sub" style="margin:6px 0 10px">Cole o código que o organizador te passou (ou abra o link do grupo).</div>
+  <div class="row"><input type="text" id="code" placeholder="Código do grupo" autocomplete="off"><button class="p f0" id="bJoin">Entrar</button></div></div>
+</section>
+<section id="t-pl">
+  <div class="card adm">
+    <div class="row"><input type="text" id="add" placeholder="Nome de quem chegou" autocomplete="off" enterkeyhint="done" maxlength="40"><button class="p f0" id="bAdd">+ Adicionar jogador</button></div>
+    <div class="row" style="margin-top:8px"><button class="s" id="bReset">🔄 Nova pelada (zerar)</button><button class="s" id="bLink">🔗 Copiar link dos amigos</button></div>
+  </div>
+  <div class="card">
+    <div class="cnt" id="cnt" style="margin-bottom:4px"></div>
+    <div class="sub" style="margin-bottom:4px" id="legend">Toque em ✅ se vai ou ❌ se não vai.</div>
+    <div id="list"></div>
+  </div>
+</section>
+<section id="t-dr">
+  <div class="card">
+    <button class="p" id="bDraw" style="width:100%;font-size:17px;padding:14px">🎲 Sortear times</button>
+    <div id="dmsg" class="sub" style="margin-top:8px;text-align:center"></div>
+  </div>
+  <div id="out"></div>
+</section>
+<section id="t-gm"><div id="game"></div></section>
+<section id="t-rk"><div class="card" id="rank"></div></section>
+</main>
+<nav id="nav"><button data-t="t-pl" class="on">👥 Presença</button><button data-t="t-dr" class="adm">🎲 Sorteio</button><button data-t="t-gm" class="adm">⏱️ Jogo</button><button data-t="t-rk">🏆 Ranking</button></nav>
+<div id="toast"></div>
+<script>
+const URLB="https://mjfrjjfocdmlwqntglsh.supabase.co",KEY="sb_publishable_lNfeev_FhKDOSwJkuMn03w_WOot7Az8";
+const COL=[["Azul","#2563eb"],["Vermelho","#dc2626"],["Verde","#15803d"],["Amarelo","#ca8a04"],["Preto","#27272a"],["Laranja","#ea580c"],["Roxo","#7e22ce"],["Rosa","#db2777"],["Cinza","#52525b"],["Turquesa","#0891b2"]];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let cfg=null,P=[],D={ranking:[]};
+let S={mins:10,bal:true,vip:true,draw:null,score:[0,0],hist:[]};
+try{cfg=JSON.parse(localStorage.getItem("racha:cfg")||"null");Object.assign(S,JSON.parse(localStorage.getItem("racha:local")||"{}"))}catch(e){}
+const hp=new URLSearchParams(location.hash.slice(1));
+if(hp.get("g")){cfg={g:hp.get("g"),k:hp.get("k")||null};try{localStorage.setItem("racha:cfg",JSON.stringify(cfg))}catch(e){}history.replaceState(null,"",location.pathname)}
+const save=()=>{try{localStorage.setItem("racha:local",JSON.stringify(S))}catch(e){}};
+const isAdm=()=>!!(cfg&&cfg.k);
+const pid=id=>P.find(p=>p.id===id);
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",3500)}
+async function rpc(fn,args){
+  const r=await fetch(URLB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{apikey:KEY,"Content-Type":"application/json"},body:JSON.stringify(args)});
+  const t=await r.text();if(!r.ok)throw new Error(t);return t?JSON.parse(t):null;
+}
+const adm=(fn,a)=>rpc(fn,Object.assign({p_code:cfg.g,p_key:cfg.k},a));
+
+function show(id){document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===id));document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===id))}
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{show(b.dataset.t);if(b.dataset.t==="t-gm")rGame()});
+$("#bJoin").onclick=()=>{const c=$("#code").value.trim();if(!c)return;cfg={g:c,k:null};try{localStorage.setItem("racha:cfg",JSON.stringify(cfg))}catch(e){}start()};
+
+async function load(){
+  try{D=await rpc("racha_get",{p_code:cfg.g,p_key:cfg.k||null});P=D.players;$("#gname").textContent=D.name+" · 5 na linha + 1 no gol";rAll()}
+  catch(e){if(/negado/.test(e.message)){cfg=null;try{localStorage.removeItem("racha:cfg")}catch(x){}start();toast("Código inválido.")}else toast("Sem conexão. Tentando de novo…")}
+}
+function start(){
+  document.body.classList.toggle("mem",!isAdm());
+  if(!cfg){show("t-setup");$("#nav").style.display="none";return}
+  $("#nav").style.display="flex";show("t-pl");load();
+}
+setInterval(()=>{if(cfg&&!document.hidden&&document.activeElement.tagName!=="INPUT")load()},20000);
+
+// players
+async function addPlayers(){
+  const names=$("#add").value.split(/[,\n;]+/).map(s=>s.trim()).filter(Boolean);$("#add").value="";$("#add").focus();
+  try{for(const n of names){const ex=P.find(p=>p.name.toLowerCase()===n.toLowerCase());let id=ex&&ex.id;if(!id)id=await adm("racha_admin_player",{p_id:null,p_name:n,p_gk:false,p_pro:false,p_stars:3,p_owner:null});await rpc("racha_set_presence",{p_code:cfg.g,p_player:id,p_confirmed:true})}await load()}catch(e){toast("Erro ao adicionar.")}
+}
+$("#bAdd").onclick=addPlayers;
+$("#add").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addPlayers()}});
+$("#bReset").onclick=async()=>{if(!confirm("Zerar as confirmações para uma nova pelada?"))return;try{await adm("racha_admin_reset",{});await load()}catch(e){toast("Erro ao zerar.")}};
+$("#bLink").onclick=async()=>{const u=location.origin+location.pathname+"#g="+cfg.g;try{await navigator.clipboard.writeText(u);toast("Link copiado! Mande no grupo.")}catch(e){prompt("Copie o link:",u)}};
+async function pres(p,v){
+  const nv=p.confirmed===v?null:v;p.confirmed=nv;rAll();
+  try{await rpc("racha_set_presence",{p_code:cfg.g,p_player:p.id,p_confirmed:nv})}catch(e){toast("Erro ao salvar.");load()}
+}
+async function patch(p,setOwner=false){
+  rAll();
+  try{await adm("racha_admin_player",{p_id:p.id,p_name:p.name,p_gk:p.gk,p_pro:p.pro,p_stars:p.stars,p_owner:setOwner?p.owner:null});await load()}catch(e){toast("Erro ao salvar.");load()}
+}
+function rPl(){
+  const y=P.filter(p=>p.confirmed===true).length,no=P.filter(p=>p.confirmed===false).length,w=P.length-y-no;
+  $("#cnt").innerHTML=`<span class="${y>=12?"ok":"bad"}">${y} confirmados</span> · ${no} não vão · ${w} sem resposta`;
+  $("#legend").textContent=isAdm()?"✅ vai · ❌ não vai · ✕ remove":"Toque em ✅ se vai ou ❌ se não vai.";
+  const l=$("#list");l.innerHTML=P.length?"":`<div class="empty">Nenhum jogador no grupo ainda.</div>`;
+  P.forEach(p=>{
+    const d=document.createElement("div");d.className="pl";
+    d.innerHTML=`<span class="n">${esc(p.name)}</span><button class="y ${p.confirmed===true?"on":""}">✅</button><button class="no ${p.confirmed===false?"on":""}">❌</button>`+(isAdm()?`<button class="x">✕</button>`:"");
+    const b=d.querySelectorAll("button");
+    b[0].onclick=()=>pres(p,true);b[1].onclick=()=>pres(p,false);
+    if(isAdm()){
+      b[2].onclick=async()=>{if(confirm("Remover "+p.name+" do grupo?")){try{await adm("racha_admin_delete",{p_id:p.id});await load()}catch(e){toast("Erro ao remover.")}}};
+    }
+    l.appendChild(d);
+  });
+  const ok=y>=12;$("#bDraw").disabled=!ok;
+  $("#dmsg").textContent=ok?`${y} jogadores → ${Math.floor(y/6)} times de 6${y%6?` + ${y%6} na fila`:""}`:`Faltam ${12-y} confirmado(s) para o mínimo de 12.`;
+}
+function rRank(){
+  const r=D.ranking||[];
+  $("#rank").innerHTML=r.length?`<b>🏆 Ranking</b><div class="sub" style="margin-bottom:6px">Vitória = 3 pontos · empate = 1</div><table><tr><th>#</th><th>Jogador</th><th>J</th><th>V</th><th>E</th><th>Pts</th></tr>${r.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td>${x.games}</td><td>${x.wins}</td><td>${x.draws}</td><td><b>${x.pts}</b></td></tr>`).join("")}</table>`:`<div class="empty">O ranking aparece depois da primeira partida registrada no app.</div>`;
+}
+
+// draw
+$("#bDraw").onclick=()=>{
+  let pres=shuf(P.filter(p=>p.confirmed===true));
+  const k=Math.floor(pres.length/6);
+  const teams=Array.from({length:k},(_,i)=>({name:COL[i%COL.length][0],color:COL[i%COL.length][1],ids:[]}));
+  let first=0;const me=pres.find(p=>p.owner)||pres.find(p=>/vitinho|vitor\s*hugo/i.test(p.name));
+  if(me){
+    const rest=pres.filter(p=>p!==me);
+    const fab=rest.find(p=>/fabiano/i.test(p.name))||rest.find(p=>p.gk);
+    const grp=[me];
+    if(fab)grp.push(fab);
+    const rem=rest.filter(p=>!grp.includes(p));
+    const tier1=rem.filter(p=>p.pro||/^(jn|guilherme|luan|salgadinho|p[ie]queno)$/i.test(p.name.trim()));
+    const tier2=rem.filter(p=>!tier1.includes(p)&&(p.stars>=5||/thierry|muril+o|h?enderson|anderson/i.test(p.name)));
+    for(const p of [...tier1,...tier2]){if(grp.length<6)grp.push(p)}
+    const left=rem.filter(p=>!grp.includes(p)).sort((a,b)=>b.stars-a.stars);
+    while(grp.length<6&&left.length)grp.push(left.shift());
+    teams[0].ids=grp.map(p=>p.id);first=1;
+    pres=pres.filter(p=>!grp.includes(p));
+  }
+  const auto=teams.slice(first);
+  const reserves=pres.splice(auto.length*6).map(p=>p.id);
+  const gks=pres.filter(p=>p.gk);
+  gks.slice(0,auto.length).forEach((g,i)=>auto[i].ids.push(g.id));
+  const used=new Set(auto.flatMap(t=>t.ids));
+  let pool=pres.filter(p=>!used.has(p.id));
+  pool.sort((a,b)=>b.stars-a.stars||Math.random()-.5);
+  const sum=t=>t.ids.reduce((s,i)=>s+(pid(i)?pid(i).stars:0),0);
+  pool.forEach(p=>{
+    const open=auto.filter(t=>t.ids.length<6);
+    const best=open.sort((a,b)=>sum(a)-sum(b)||a.ids.length-b.ids.length||Math.random()-.5)[0];
+    best.ids.push(p.id);
+  });
+  teams.forEach(t=>t.ids=shuf(t.ids));
+  S.draw={teams,reserves,queue:teams.map((_,i)=>i)};S.score=[0,0];S.hist=[];save();rDraw();rGame();
+  $("#out").scrollIntoView({behavior:"smooth"});
+};
+function tlines(t){return t.ids.map(i=>{const p=pid(i);return p?p.name:"?"})}
+function rDraw(){
+  const d=S.draw;if(!d){$("#out").innerHTML="";return}
+  $("#out").innerHTML=`<div class="teams">${d.teams.map(t=>`<div class="team" style="background:${t.color}"><h3>${t.name}</h3><ul>${tlines(t).map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`).join("")}</div>
+  ${d.reserves.length?`<div class="res">⏳ <b>Na fila (entram no rodízio):</b> ${d.reserves.map(i=>esc(pid(i)?pid(i).name:"?")).join(", ")}</div>`:""}
+  <div class="row" style="margin-top:12px"><button id="bWa">📲 Enviar no WhatsApp</button><button class="p" id="bGo">⏱️ Ir pro jogo</button></div>`;
+  $("#bGo").onclick=()=>{show("t-gm");rGame()};
+  $("#bWa").onclick=()=>{
+    let m="⚽ *Times de hoje*\n";
+    d.teams.forEach(t=>m+=`\n*${t.name}*\n`+tlines(t).join("\n")+"\n");
+    if(d.reserves.length)m+="\n⏳ Fila: "+d.reserves.map(i=>pid(i)?pid(i).name:"").join(", ");
+    window.open("https://wa.me/?text="+encodeURIComponent(m),"_blank");
+  };
+}
+
+// game / timer
+let T={left:S.mins*60000,run:false,end:0,iv:null,done:false},wl=null,ac=null;
+function beep(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach((t,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=i==2?1100:800;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(.3,ac.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+t+.3);o.start(ac.currentTime+t);o.stop(ac.currentTime+t+.3)})}catch(e){}try{navigator.vibrate&&navigator.vibrate([400,150,400,150,800])}catch(e){}}
+const fmt=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return String(s/60|0).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+async function lock(on){try{if(on&&navigator.wakeLock)wl=await navigator.wakeLock.request("screen");else if(wl){wl.release();wl=null}}catch(e){}}
+function tick(){
+  T.left=T.end-Date.now();
+  if(T.left<=0){T.left=0;T.run=false;T.done=true;clearInterval(T.iv);lock(false);beep();rGame();return}
+  const c=$("#clk");if(c)c.textContent=fmt(T.left);
+}
+function startT(){if(T.done)return;T.run=true;T.end=Date.now()+T.left;clearInterval(T.iv);T.iv=setInterval(tick,200);lock(true);rGame()}
+function pause(){T.run=false;clearInterval(T.iv);lock(false);rGame()}
+function reset(){T.run=false;T.done=false;clearInterval(T.iv);T.left=S.mins*60000;lock(false);rGame()}
+function rGame(){
+  const d=S.draw,g=$("#game");
+  if(!d){g.innerHTML=`<div class="card empty">Faça o sorteio primeiro 🎲</div>`;return}
+  const q=d.queue,A=d.teams[q[0]],B=d.teams[q[1]];
+  g.innerHTML=`<div class="card">
+    <div class="clock ${T.done?"end":""}" id="clk">${fmt(T.left)}</div>
+    <div class="row"><button class="p" id="bS">${T.run?"⏸ Pausar":T.done?"Fim!":"▶ Iniciar"}</button><button id="bR">↺ Zerar</button></div>
+    <div class="row" style="margin-top:8px">${[7,10,15,20].map(m=>`<button class="s pm ${S.mins===m?"p":""}" data-m="${m}">${m} min</button>`).join("")}</div>
+  </div>
+  <div class="card"><div class="vs">
+    <div><div class="chip" style="background:${A.color}">${A.name}</div><div class="sc">${S.score[0]}</div><div class="row"><button class="s" data-g="0,-1">−</button><button class="s" data-g="0,1">+ gol</button></div></div>
+    <div style="color:var(--mut);font-weight:700">×</div>
+    <div><div class="chip" style="background:${B.color}">${B.name}</div><div class="sc">${S.score[1]}</div><div class="row"><button class="s" data-g="1,-1">−</button><button class="s" data-g="1,1">+ gol</button></div></div>
+  </div></div>
+  <div class="card"><b>Fim da partida — quem ganhou?</b>
+    <div class="row" style="margin-top:8px"><button data-r="a">${A.name}</button><button data-r="e">Empate</button><button data-r="b">${B.name}</button></div>
+    <div class="sub" style="margin-top:6px">${q.length>2?"Quem ganha fica; o perdedor vai pro fim da fila. No empate, os dois saem.":"Só 2 times: o rodízio não muda."} O placar entra no ranking.</div>
+  </div>
+  ${q.length>2?`<div class="card"><b>Próximos</b><div class="q">${q.slice(2).map((i,n)=>`<span style="background:${d.teams[i].color}">${n+1}º ${d.teams[i].name}</span>`).join("")}</div></div>`:""}
+  ${S.hist.length?`<div class="card"><b>Placar do dia</b>${S.hist.slice().reverse().map(h=>`<div class="h">${esc(h)}</div>`).join("")}</div>`:""}`;
+  $("#bS").onclick=()=>T.run?pause():startT();$("#bR").onclick=reset;
+  g.querySelectorAll(".pm").forEach(b=>b.onclick=()=>{S.mins=+b.dataset.m;save();reset()});
+  g.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const[i,v]=b.dataset.g.split(",").map(Number);S.score[i]=Math.max(0,S.score[i]+v);save();rGame()});
+  g.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>result(b.dataset.r));
+}
+function result(r){
+  const d=S.draw,q=d.queue,[a,b,...rest]=q,n=d.teams;
+  S.hist.push(`${n[a].name} ${S.score[0]} × ${S.score[1]} ${n[b].name}${r==="a"?` — venceu ${n[a].name}`:r==="b"?` — venceu ${n[b].name}`:" — empate"}`);
+  adm("racha_admin_match",{p_a:n[a].name,p_b:n[b].name,p_sa:S.score[0],p_sb:S.score[1],p_pa:n[a].ids,p_pb:n[b].ids}).then(load).catch(()=>toast("Não consegui salvar no ranking."));
+  if(q.length>2)d.queue=r==="a"?[a,...rest,b]:r==="b"?[b,...rest,a]:[...rest,a,b];
+  S.score=[0,0];save();reset();
+}
+function rAll(){rPl();rDraw();rGame();rRank()}
+start();
+</script>
+</body>
+</html>
