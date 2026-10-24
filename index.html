@@ -49,6 +49,13 @@ nav button.on{color:var(--ac);font-weight:700}
 table{width:100%;border-collapse:collapse}td,th{padding:8px 4px;text-align:center;border-bottom:1px solid var(--bd)}td:nth-child(2),th:nth-child(2){text-align:left}th{font-size:12px;color:var(--mut)}
 #toast{position:fixed;left:16px;right:16px;bottom:96px;background:var(--tx);color:var(--bg);padding:10px 14px;border-radius:12px;display:none;z-index:9}
 body.mem .adm{display:none!important}
+textarea{font:inherit;width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);resize:vertical;min-height:110px}
+.hgrid{display:flex;flex-wrap:wrap;gap:6px}
+.hchip{padding:7px 11px;border-radius:99px;font-size:13px;font-weight:600;border:1px solid var(--bd);background:var(--bg);color:var(--mut)}
+.hchip.on{background:var(--ac);color:var(--acx);border-color:transparent}
+.pchip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:99px;font-size:13px;font-weight:600;background:var(--bg);border:1px solid var(--bd);margin:3px}
+.pchip button{border:0;background:none;padding:0 2px;font-size:14px;color:var(--mut)}
+.pl .here.on{background:#0284c7;color:#fff;border-color:transparent}
 </style>
 </head>
 <body>
@@ -61,6 +68,18 @@ body.mem .adm{display:none!important}
 <section id="t-pl">
   <div class="card adm">
     <div class="row"><input type="text" id="add" placeholder="Nome de quem chegou" autocomplete="off" enterkeyhint="done" maxlength="40"><button class="p f0" id="bAdd">+ Adicionar jogador</button></div>
+    <div class="row" style="margin-top:8px"><button class="s" id="bOpenImp">📋 Importar lista / foto do WhatsApp</button></div>
+    <div id="impBox" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">
+      <b>📋 Lista do WhatsApp</b>
+      <div class="sub" style="margin:4px 0 8px">Cole a lista copiada do grupo ou envie um print/foto da lista. O sistema identifica os nomes sozinho.</div>
+      <textarea id="waTxt" placeholder="Exemplo:&#10;1 - Vitinho&#10;2 - Fabiano&#10;3 - Guilherme..."></textarea>
+      <div class="row" style="margin-top:8px">
+        <label class=" f0" style="display:inline-block"><input type="file" id="waImg" accept="image/*" style="display:none"><span id="bOcr" style="display:inline-block;padding:8px 12px;border:1px solid var(--bd);border-radius:12px;font-size:13px;cursor:pointer;background:var(--card)">📷 Ler foto / print da lista</span></label>
+        <button class="s" id="bParse">🔍 Identificar nomes</button>
+      </div>
+      <div id="ocrSt" class="sub" style="margin-top:6px;display:none"></div>
+      <div id="waPrev" style="margin-top:8px"></div>
+    </div>
     <div class="row" style="margin-top:8px"><button class="s" id="bReset">🔄 Nova pelada (zerar)</button><button class="s" id="bLink">🔗 Copiar link dos amigos</button></div>
   </div>
   <div class="card">
@@ -70,6 +89,18 @@ body.mem .adm{display:none!important}
   </div>
 </section>
 <section id="t-dr">
+  <div class="card" id="hereCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <b>📍 Quem já está na quadra?</b>
+      <div>
+        <button class="s" id="bHereAll">Todos</button>
+        <button class="s" id="bHereNone">Limpar</button>
+      </div>
+    </div>
+    <div class="sub" style="margin:4px 0 8px">Marque os jogadores que <b>já estão lá</b>. Eles entram nos primeiros times; quem ainda não chegou fica para o outro time.</div>
+    <div id="hereList" class="hgrid"></div>
+    <div id="hereMsg" class="sub" style="margin-top:8px;font-weight:600"></div>
+  </div>
   <div class="card">
     <button class="p" id="bDraw" style="width:100%;font-size:17px;padding:14px">🎲 Sortear times</button>
     <div id="dmsg" class="sub" style="margin-top:8px;text-align:center"></div>
@@ -87,9 +118,11 @@ const COL=[["Azul","#2563eb"],["Vermelho","#dc2626"],["Verde","#15803d"],["Amare
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-let cfg=null,P=[],D={ranking:[]};
-let S={mins:10,bal:true,vip:true,draw:null,score:[0,0],hist:[]};
-try{cfg=JSON.parse(localStorage.getItem("racha:cfg")||"null");Object.assign(S,JSON.parse(localStorage.getItem("racha:local")||"{}"))}catch(e){}
+let cfg=null,P=[],D={ranking:[]},parsedWa=[];
+let S={mins:10,bal:true,vip:true,draw:null,score:[0,0],hist:[],here:{}};
+try{cfg=JSON.parse(localStorage.getItem("racha:cfg")||"null");Object.assign(S,JSON.parse(localStorage.getItem("racha:local")||"{}"));if(!S.here||typeof S.here!=="object")S.here={}}catch(e){}
+const norm=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+const isHere=id=>!!(S.here&&S.here[id]);
 const hp=new URLSearchParams(location.hash.slice(1));
 if(hp.get("g")){cfg={g:hp.get("g"),k:hp.get("k")||null};try{localStorage.setItem("racha:cfg",JSON.stringify(cfg))}catch(e){}history.replaceState(null,"",location.pathname)}
 const save=()=>{try{localStorage.setItem("racha:local",JSON.stringify(S))}catch(e){}};
@@ -115,42 +148,134 @@ function start(){
   if(!cfg){show("t-setup");$("#nav").style.display="none";return}
   $("#nav").style.display="flex";show("t-pl");load();
 }
-setInterval(()=>{if(cfg&&!document.hidden&&document.activeElement.tagName!=="INPUT")load()},20000);
+setInterval(()=>{if(cfg&&!document.hidden&&!["INPUT","TEXTAREA"].includes(document.activeElement.tagName))load()},20000);
 
-// players
+// players & WhatsApp list import
+async function importNames(items){
+  if(!items.length)return;
+  toast("Importando "+items.length+" jogadores...");
+  try{
+    for(const it of items){
+      const n=typeof it==="string"?it:it.name;
+      const gk=!!(it&&it.gk);
+      const ex=P.find(p=>norm(p.name)===norm(n));
+      let id=ex&&ex.id;
+      if(!id)id=await adm("racha_admin_player",{p_id:null,p_name:n,p_gk:gk,p_pro:false,p_stars:3,p_owner:null});
+      await rpc("racha_set_presence",{p_code:cfg.g,p_player:id,p_confirmed:true});
+    }
+    await load();
+    toast("Lista importada com sucesso! ✅");
+  }catch(e){toast("Erro ao importar jogadores.")}
+}
 async function addPlayers(){
   const names=$("#add").value.split(/[,\n;]+/).map(s=>s.trim()).filter(Boolean);$("#add").value="";$("#add").focus();
-  try{for(const n of names){const ex=P.find(p=>p.name.toLowerCase()===n.toLowerCase());let id=ex&&ex.id;if(!id)id=await adm("racha_admin_player",{p_id:null,p_name:n,p_gk:false,p_pro:false,p_stars:3,p_owner:null});await rpc("racha_set_presence",{p_code:cfg.g,p_player:id,p_confirmed:true})}await load()}catch(e){toast("Erro ao adicionar.")}
+  await importNames(names);
 }
 $("#bAdd").onclick=addPlayers;
 $("#add").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addPlayers()}});
-$("#bReset").onclick=async()=>{if(!confirm("Zerar as confirmações para uma nova pelada?"))return;try{await adm("racha_admin_reset",{});await load()}catch(e){toast("Erro ao zerar.")}};
+
+function parseWaList(raw){
+  const lines=String(raw||"").split(/\r?\n/);
+  const out=[],seen=new Set();
+  let skip=false,gkSec=false;
+  for(let ln of lines){
+    ln=ln.replace(/^\[?\d{1,2}\/\d{1,2}(?:\/\d{2,4})?[,\s]+\d{1,2}:\d{2}\]?\s*[^:]+:\s*/,"").replace(/\s+\d{1,2}:\d{2}\s*[✓✔vV]*$/,"").trim();
+    if(!ln)continue;
+    if(/^(lista\s+de\s+espera|suplentes|reservas|fora|desistentes|n[aã]o\s+v[aã]o)\b/i.test(ln)){skip=true;continue}
+    if(/^(goleiros?)\b\s*:?$/i.test(ln)){skip=false;gkSec=true;continue}
+    if(/^(lista|confirmados|linha|jogadores|mensalistas|avulsos)\b/i.test(ln)&&ln.length<35){skip=false;gkSec=false;continue}
+    if(skip)continue;
+    if(/^(racha|pelada|futebol|society|local|hor[aá]rio|data|valor|pix|chave|quadra|arena|regras|obs|aten[cç][aã]o)\b\s*[:\-]/i.test(ln))continue;
+    if(/https?:\/\/|www\.|r\$\s*\d/i.test(ln))continue;
+    const isGk=gkSec||/\b(goleiro|gk|gol)\b/i.test(ln);
+    ln=ln.replace(/^\s*(?:(?:\d{1,2}\s*(?:️⃣|[.)\-:–—])+|\d{1,2}\s+(?=[A-Za-zÀ-ÿ]))|[•*\-–—✅☑️🟢⚽🏃‍♂️🧤👉]+\s*)+/u,"");
+    ln=ln.replace(/\((?:pago|ok|confirmado|goleiro|gk|gol|mensalista|avulso|pix)[^)]*\)/gi,"");
+    ln=ln.replace(/\s*[-–—]\s*(?:pago|ok|confirmado|goleiro|gk)\b.*$/i,"");
+    ln=ln.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}✅☑️✔️✓💰⚽🧤🔥👍]/gu,"").replace(/^[\s\-:.,;+]+|[\s\-:.,;+]+$/g,"").trim();
+    if(ln.length<2||/^\d+$/.test(ln)||/^\d{1,2}h\d{0,2}$/i.test(ln))continue;
+    const k=norm(ln);
+    if(k&&!seen.has(k)){seen.add(k);out.push({name:ln.slice(0,40),gk:isGk})}
+  }
+  return out;
+}
+function rWaPrev(){
+  const box=$("#waPrev");
+  if(!parsedWa.length){box.innerHTML=$("#waTxt").value.trim()?`<div class="sub">Nenhum nome identificado. Verifique o texto acima.</div>`:"";return}
+  box.innerHTML=`<div class="sub" style="margin-bottom:6px"><b>${parsedWa.length} jogadores identificados na lista:</b> (toque no ✕ se quiser tirar alguém)</div>
+  <div>${parsedWa.map((p,i)=>`<span class="pchip">${esc(p.name)}${p.gk?" 🧤":""}<button data-rm="${i}">✕</button></span>`).join("")}</div>
+  <button class="p" id="bImpGo" style="width:100%;margin-top:8px">✅ Colocar esses ${parsedWa.length} nomes na lista do dia</button>`;
+  box.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{parsedWa.splice(+b.dataset.rm,1);rWaPrev()});
+  $("#bImpGo").onclick=async()=>{const list=[...parsedWa];parsedWa=[];$("#waTxt").value="";$("#impBox").style.display="none";rWaPrev();await importNames(list)};
+}
+$("#bOpenImp").onclick=()=>{const b=$("#impBox");b.style.display=b.style.display==="none"?"block":"none"};
+$("#bParse").onclick=()=>{parsedWa=parseWaList($("#waTxt").value);rWaPrev()};
+$("#waTxt").addEventListener("input",()=>{parsedWa=parseWaList($("#waTxt").value);rWaPrev()});
+$("#waImg").addEventListener("change",async e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const st=$("#ocrSt");st.style.display="block";st.textContent="⏳ Carregando leitor de imagem...";
+  try{
+    if(!window.Tesseract){
+      await new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+    }
+    const ret=await window.Tesseract.recognize(f,"por",{logger:m=>{if(m.status==="recognizing text")st.textContent=`📷 Lendo foto da lista... ${Math.round((m.progress||0)*100)}%`}});
+    const txt=(ret&&ret.data&&ret.data.text)||"";
+    $("#waTxt").value=txt;
+    parsedWa=parseWaList(txt);
+    st.textContent=parsedWa.length?`✅ Foto lida! Confira os ${parsedWa.length} nomes abaixo (ou edite o texto se precisar).`:`⚠️ Foto lida, mas revise o texto acima.`;
+    rWaPrev();
+  }catch(err){st.textContent="❌ Não foi possível ler a imagem. Tente colar o texto da lista."}
+  e.target.value="";
+});
+
+$("#bReset").onclick=async()=>{if(!confirm("Zerar as confirmações para uma nova pelada?"))return;try{S.here={};S.draw=null;save();await adm("racha_admin_reset",{});await load()}catch(e){toast("Erro ao zerar.")}};
 $("#bLink").onclick=async()=>{const u=location.origin+location.pathname+"#g="+cfg.g;try{await navigator.clipboard.writeText(u);toast("Link copiado! Mande no grupo.")}catch(e){prompt("Copie o link:",u)}};
 async function pres(p,v){
-  const nv=p.confirmed===v?null:v;p.confirmed=nv;rAll();
+  const nv=p.confirmed===v?null:v;p.confirmed=nv;if(!nv&&S.here)delete S.here[p.id];save();rAll();
   try{await rpc("racha_set_presence",{p_code:cfg.g,p_player:p.id,p_confirmed:nv})}catch(e){toast("Erro ao salvar.");load()}
 }
+function toggleHere(id){
+  if(!S.here)S.here={};
+  if(S.here[id])delete S.here[id];else S.here[id]=true;
+  save();rPl();
+}
+$("#bHereAll").onclick=()=>{const conf=P.filter(p=>p.confirmed===true);S.here={};conf.forEach(p=>S.here[p.id]=true);save();rPl()};
+$("#bHereNone").onclick=()=>{S.here={};save();rPl()};
+
 async function patch(p,setOwner=false){
   rAll();
   try{await adm("racha_admin_player",{p_id:p.id,p_name:p.name,p_gk:p.gk,p_pro:p.pro,p_stars:p.stars,p_owner:setOwner?p.owner:null});await load()}catch(e){toast("Erro ao salvar.");load()}
 }
 function rPl(){
-  const y=P.filter(p=>p.confirmed===true).length,no=P.filter(p=>p.confirmed===false).length,w=P.length-y-no;
-  $("#cnt").innerHTML=`<span class="${y>=12?"ok":"bad"}">${y} confirmados</span> · ${no} não vão · ${w} sem resposta`;
-  $("#legend").textContent=isAdm()?"✅ vai · ❌ não vai · ✕ remove":"Toque em ✅ se vai ou ❌ se não vai.";
+  const conf=P.filter(p=>p.confirmed===true),y=conf.length,no=P.filter(p=>p.confirmed===false).length,w=P.length-y-no;
+  const hCnt=conf.filter(p=>isHere(p.id)).length;
+  $("#cnt").innerHTML=`<span class="${y>=12?"ok":"bad"}">${y} na lista</span>${y?` (${hCnt} já estão lá)`:""} · ${no} não vão · ${w} sem resposta`;
+  $("#legend").textContent=isAdm()?"✅ na lista · 📍 já está lá · ❌ não vai · ✕ remove":"Toque em ✅ se vai ou ❌ se não vai.";
   const l=$("#list");l.innerHTML=P.length?"":`<div class="empty">Nenhum jogador no grupo ainda.</div>`;
   P.forEach(p=>{
     const d=document.createElement("div");d.className="pl";
-    d.innerHTML=`<span class="n">${esc(p.name)}</span><button class="y ${p.confirmed===true?"on":""}">✅</button><button class="no ${p.confirmed===false?"on":""}">❌</button>`+(isAdm()?`<button class="x">✕</button>`:"");
-    const b=d.querySelectorAll("button");
-    b[0].onclick=()=>pres(p,true);b[1].onclick=()=>pres(p,false);
+    const hBtn=isAdm()&&p.confirmed===true?`<button class="here ${isHere(p.id)?"on":""}" title="Marcar que já chegou na quadra">📍 ${isHere(p.id)?"Chegou":"Chegou?"}</button>`:"";
+    d.innerHTML=`<span class="n">${esc(p.name)}</span>${hBtn}<button class="y ${p.confirmed===true?"on":""}">✅</button><button class="no ${p.confirmed===false?"on":""}">❌</button>`+(isAdm()?`<button class="x">✕</button>`:"");
+    if(isAdm()&&p.confirmed===true)d.querySelector(".here").onclick=()=>toggleHere(p.id);
+    d.querySelector(".y").onclick=()=>pres(p,true);
+    d.querySelector(".no").onclick=()=>pres(p,false);
     if(isAdm()){
-      b[2].onclick=async()=>{if(confirm("Remover "+p.name+" do grupo?")){try{await adm("racha_admin_delete",{p_id:p.id});await load()}catch(e){toast("Erro ao remover.")}}};
+      d.querySelector(".x").onclick=async()=>{if(confirm("Remover "+p.name+" do grupo?")){try{await adm("racha_admin_delete",{p_id:p.id});await load()}catch(e){toast("Erro ao remover.")}}};
     }
     l.appendChild(d);
   });
+  // Render "Quem já está na quadra?" in Sorteio tab
+  const hl=$("#hereList"),hm=$("#hereMsg");
+  if(!conf.length){
+    hl.innerHTML=`<div class="sub">Confirme ou importe a lista de jogadores na aba Presença primeiro.</div>`;
+    hm.textContent="";
+  }else{
+    hl.innerHTML=conf.map(p=>`<button class="hchip ${isHere(p.id)?"on":""}" data-hid="${p.id}">${isHere(p.id)?"🟢":"⏳"} ${esc(p.name)}</button>`).join("");
+    hl.querySelectorAll("[data-hid]").forEach(b=>b.onclick=()=>toggleHere(+b.dataset.hid||b.dataset.hid));
+    const late=y-hCnt;
+    hm.innerHTML=hCnt>0?`🟢 <b>${hCnt} já estão lá</b> (jogam primeiro) · ⏳ <b>${late} ainda não chegaram</b> (ficam para outro time)`:`Toque nos nomes acima conforme o pessoal for chegando na quadra.`;
+  }
   const ok=y>=12;$("#bDraw").disabled=!ok;
-  $("#dmsg").textContent=ok?`${y} jogadores → ${Math.floor(y/6)} times de 6${y%6?` + ${y%6} na fila`:""}`:`Faltam ${12-y} confirmado(s) para o mínimo de 12.`;
+  $("#dmsg").textContent=ok?`${y} na lista → ${Math.floor(y/6)} times de 6${y%6?` + ${y%6} no próximo time`:""}`:`Faltam ${12-y} confirmado(s) na lista para o mínimo de 12.`;
 }
 function rRank(){
   const r=D.ranking||[];
@@ -158,38 +283,67 @@ function rRank(){
 }
 
 // draw
-$("#bDraw").onclick=()=>{
-  let pres=shuf(P.filter(p=>p.confirmed===true));
-  const k=Math.floor(pres.length/6);
-  const teams=Array.from({length:k},(_,i)=>({name:COL[i%COL.length][0],color:COL[i%COL.length][1],ids:[]}));
-  let first=0;const me=pres.find(p=>p.owner)||pres.find(p=>/vitinho|vitor\s*hugo/i.test(p.name));
-  if(me){
-    const rest=pres.filter(p=>p!==me);
-    const fab=rest.find(p=>/fabiano/i.test(p.name))||rest.find(p=>p.gk);
-    const grp=[me];
-    if(fab)grp.push(fab);
-    const rem=rest.filter(p=>!grp.includes(p));
-    const tier1=rem.filter(p=>p.pro||/^(jn|guilherme|luan|salgadinho|p[ie]queno)$/i.test(p.name.trim()));
-    const tier2=rem.filter(p=>!tier1.includes(p)&&(p.stars>=5||/thierry|muril+o|h?enderson|anderson/i.test(p.name)));
-    for(const p of [...tier1,...tier2]){if(grp.length<6)grp.push(p)}
-    const left=rem.filter(p=>!grp.includes(p)).sort((a,b)=>b.stars-a.stars);
-    while(grp.length<6&&left.length)grp.push(left.shift());
-    teams[0].ids=grp.map(p=>p.id);first=1;
-    pres=pres.filter(p=>!grp.includes(p));
-  }
-  const auto=teams.slice(first);
-  const reserves=pres.splice(auto.length*6).map(p=>p.id);
-  const gks=pres.filter(p=>p.gk);
-  gks.slice(0,auto.length).forEach((g,i)=>auto[i].ids.push(g.id));
-  const used=new Set(auto.flatMap(t=>t.ids));
-  let pool=pres.filter(p=>!used.has(p.id));
+function fillBalanced(targetTeams,players){
+  if(!targetTeams.length||!players.length)return;
+  const gks=players.filter(p=>p.gk);
+  gks.slice(0,targetTeams.length).forEach((g,i)=>{if(targetTeams[i].ids.length<6)targetTeams[i].ids.push(g.id)});
+  const used=new Set(targetTeams.flatMap(t=>t.ids));
+  let pool=players.filter(p=>!used.has(p.id));
   pool.sort((a,b)=>b.stars-a.stars||Math.random()-.5);
   const sum=t=>t.ids.reduce((s,i)=>s+(pid(i)?pid(i).stars:0),0);
   pool.forEach(p=>{
-    const open=auto.filter(t=>t.ids.length<6);
+    const open=targetTeams.filter(t=>t.ids.length<6);
+    if(!open.length)return;
     const best=open.sort((a,b)=>sum(a)-sum(b)||a.ids.length-b.ids.length||Math.random()-.5)[0];
     best.ids.push(p.id);
   });
+}
+$("#bDraw").onclick=()=>{
+  const allConf=P.filter(p=>p.confirmed===true);
+  const anyMarked=allConf.some(p=>isHere(p.id));
+  let herePool=shuf(anyMarked?allConf.filter(p=>isHere(p.id)):allConf);
+  let latePool=shuf(anyMarked?allConf.filter(p=>!isHere(p.id)):[]);
+  let pres=[...herePool,...latePool];
+  const k=Math.floor(pres.length/6);
+  const teams=Array.from({length:k},(_,i)=>({name:COL[i%COL.length][0],color:COL[i%COL.length][1],ids:[]}));
+  // Players who are already there have priority for the first teams; late players stay at the end (next team / queue)
+  const mainPool=herePool.length>=6?herePool:pres;
+  let first=0;const me=mainPool.find(p=>p.owner)||mainPool.find(p=>/vitinho|vitor\s*hugo/i.test(p.name));
+  if(me){
+    const rest=pres.filter(p=>p!==me);
+    const restHere=herePool.filter(p=>p!==me);
+    const fab=restHere.find(p=>/fabiano/i.test(p.name))||restHere.find(p=>p.gk)||rest.find(p=>/fabiano/i.test(p.name))||rest.find(p=>p.gk);
+    const grp=[me];
+    if(fab)grp.push(fab);
+    // Prioritize players who are already at the field for Team 1
+    for(const src of [restHere,rest]){
+      const rem=src.filter(p=>!grp.includes(p));
+      const tier1=rem.filter(p=>p.pro||/^(jn|guilherme|luan|salgadinho|p[ie]queno)$/i.test(p.name.trim()));
+      const tier2=rem.filter(p=>!tier1.includes(p)&&(p.stars>=5||/thierry|muril+o|h?enderson|anderson/i.test(p.name)));
+      for(const p of [...tier1,...tier2]){if(grp.length<6)grp.push(p)}
+      const left=rem.filter(p=>!grp.includes(p)).sort((a,b)=>b.stars-a.stars);
+      while(grp.length<6&&left.length)grp.push(left.shift());
+    }
+    teams[0].ids=grp.map(p=>p.id);first=1;
+    pres=pres.filter(p=>!grp.includes(p));
+  }
+  // Ensure at least one present goalkeeper stays within the first-match slice
+  const needGk=Math.max(1,2-first);
+  const frontGks=pres.filter(p=>isHere(p.id)&&p.gk).slice(0,needGk);
+  if(frontGks.length)pres=[...frontGks,...pres.filter(p=>!frontGks.includes(p))];
+  const auto=teams.slice(first);
+  const reserves=pres.splice(auto.length*6).map(p=>p.id);
+  if(anyMarked&&auto.length>1){
+    // Fill the teams that start playing now (up to 2 first teams total) with players who are already there
+    const playNowCount=Math.max(1,2-first);
+    const nowTeams=auto.slice(0,playNowCount);
+    const waitTeams=auto.slice(playNowCount);
+    const nowPlayers=pres.splice(0,playNowCount*6);
+    fillBalanced(nowTeams,nowPlayers);
+    fillBalanced(waitTeams,pres);
+  }else{
+    fillBalanced(auto,pres);
+  }
   teams.forEach(t=>t.ids=shuf(t.ids));
   S.draw={teams,reserves,queue:teams.map((_,i)=>i)};S.score=[0,0];S.hist=[];save();rDraw();rGame();
   $("#out").scrollIntoView({behavior:"smooth"});
@@ -197,14 +351,15 @@ $("#bDraw").onclick=()=>{
 function tlines(t){return t.ids.map(i=>{const p=pid(i);return p?p.name:"?"})}
 function rDraw(){
   const d=S.draw;if(!d){$("#out").innerHTML="";return}
-  $("#out").innerHTML=`<div class="teams">${d.teams.map(t=>`<div class="team" style="background:${t.color}"><h3>${t.name}</h3><ul>${tlines(t).map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`).join("")}</div>
-  ${d.reserves.length?`<div class="res">⏳ <b>Na fila (entram no rodízio):</b> ${d.reserves.map(i=>esc(pid(i)?pid(i).name:"?")).join(", ")}</div>`:""}
+  const nextCol=COL[d.teams.length%COL.length];
+  $("#out").innerHTML=`<div class="teams">${d.teams.map((t,idx)=>`<div class="team" style="background:${t.color}"><h3><span>${t.name}</span><span class="st">${idx<2?"Joga agora":"Próximo ("+(idx+1)+"º)"}</span></h3><ul>${tlines(t).map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`).join("")}
+  ${d.reserves.length?`<div class="team" style="background:${nextCol[1]};opacity:.88;border:2px dashed rgba(255,255,255,.5)"><h3><span>${nextCol[0]} (Outro time)</span><span class="st">${d.reserves.length}/6 na espera</span></h3><ul>${d.reserves.map(i=>`<li>${esc(pid(i)?pid(i).name:"?")}</li>`).join("")}</ul></div>`:""}</div>
   <div class="row" style="margin-top:12px"><button id="bWa">📲 Enviar no WhatsApp</button><button class="p" id="bGo">⏱️ Ir pro jogo</button></div>`;
   $("#bGo").onclick=()=>{show("t-gm");rGame()};
   $("#bWa").onclick=()=>{
     let m="⚽ *Times de hoje*\n";
-    d.teams.forEach(t=>m+=`\n*${t.name}*\n`+tlines(t).join("\n")+"\n");
-    if(d.reserves.length)m+="\n⏳ Fila: "+d.reserves.map(i=>pid(i)?pid(i).name:"").join(", ");
+    d.teams.forEach((t,idx)=>m+=`\n*${t.name}* (${idx<2?"Joga agora":(idx+1)+"º time"})\n`+tlines(t).join("\n")+"\n");
+    if(d.reserves.length)m+=`\n⏳ *${nextCol[0]} (Aguardando / Fila)*\n`+d.reserves.map(i=>pid(i)?pid(i).name:"").join("\n");
     window.open("https://wa.me/?text="+encodeURIComponent(m),"_blank");
   };
 }
